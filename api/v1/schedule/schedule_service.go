@@ -1,15 +1,18 @@
 package schedule
 
 import (
+	"sort"
+
 	"github.com/aavsss/programado/api/v1/schedule/models"
 	"github.com/aavsss/programado/api/v1/schedule/repository"
+	"github.com/google/uuid"
 )
 
 type ScheduleService interface {
 	AddToSchedule(period models.Period) bool
-	RemoveFromSchedule(id float64) bool
+	RemoveFromSchedule(id string) bool
 	ViewSchedule() []repository.PeriodInDB
-	UpdateSchedule(id float64, newPeriod models.Period) bool
+	UpdateSchedule(id string, newPeriod models.Period) bool
 }
 
 type ScheduleServiceImpl struct {
@@ -22,16 +25,23 @@ func NewService() ScheduleService {
 
 func (s *ScheduleServiceImpl) AddToSchedule(period models.Period) bool {
 	toBeAdded := repository.PeriodInDB{
-		Id:          4,
+		Id:          uuid.New().String(),
 		StartTime:   period.StartTime,
 		EndTime:     period.EndTime,
 		Description: period.Description,
+	}
+	// checking to see if the schedule overlaps or not
+	for _, period := range repository.MockData {
+		if (toBeAdded.StartTime >= period.StartTime || toBeAdded.EndTime >= period.StartTime) &&
+			(toBeAdded.StartTime <= period.EndTime || toBeAdded.EndTime <= period.EndTime) {
+			return false
+		}
 	}
 	repository.MockData = append(repository.MockData, toBeAdded)
 	return true
 }
 
-func (s *ScheduleServiceImpl) RemoveFromSchedule(id float64) bool {
+func (s *ScheduleServiceImpl) RemoveFromSchedule(id string) bool {
 	// Imperative side. Change it to declarative
 	for i, period := range repository.MockData {
 		if period.Id == id {
@@ -43,10 +53,22 @@ func (s *ScheduleServiceImpl) RemoveFromSchedule(id float64) bool {
 }
 
 func (s *ScheduleServiceImpl) ViewSchedule() []repository.PeriodInDB {
+	sort.SliceStable(repository.MockData, func(i, j int) bool {
+		return repository.MockData[i].StartTime < repository.MockData[j].StartTime
+	})
 	return repository.MockData
 }
 
-func (s *ScheduleServiceImpl) UpdateSchedule(id float64, newPeriod models.Period) bool {
+func (s *ScheduleServiceImpl) UpdateSchedule(id string, newPeriod models.Period) bool {
+	// to check if it overlaps or not
+	for _, period := range repository.MockData {
+		if period.Id != id {
+			if (newPeriod.StartTime >= period.StartTime || newPeriod.EndTime >= period.StartTime) &&
+				(newPeriod.StartTime <= period.EndTime || newPeriod.EndTime <= period.EndTime) {
+				return false
+			}
+		}
+	}
 	for i, period := range repository.MockData {
 		if period.Id == id {
 			period := &repository.MockData[i]

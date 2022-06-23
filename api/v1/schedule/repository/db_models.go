@@ -1,7 +1,7 @@
 package repository
 
 type PeriodInDB struct {
-	Id          float64
+	Id          string
 	StartTime   int
 	EndTime     int
 	Description string

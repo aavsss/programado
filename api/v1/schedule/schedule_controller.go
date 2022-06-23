@@ -30,25 +30,41 @@ func (sc *ScheduleController) viewSchedule(c *gin.Context) {
 }
 
 func (sc *ScheduleController) addToSchedule(c *gin.Context) {
+	var period models.Period
+
+	if err := c.BindJSON(&period); err != nil {
+		return
+	}
+
 	c.IndentedJSON(
-		http.StatusOK, sc.ScheduleService.AddToSchedule(
-			models.Period{
-				StartTime:   15,
-				EndTime:     20,
-				Description: "New Meeting",
-			},
-		),
+		http.StatusOK, sc.ScheduleService.AddToSchedule(period),
 	)
 }
 
 func (sc *ScheduleController) removeFromSchedule(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, sc.ScheduleService.RemoveFromSchedule(2))
+	id, ok := c.GetQuery("id")
+
+	if !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Missing id query parameter"})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, sc.ScheduleService.RemoveFromSchedule(id))
 }
 
 func (sc *ScheduleController) updateSchedule(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, sc.ScheduleService.UpdateSchedule(3, models.Period{
-		StartTime:   21,
-		EndTime:     25,
-		Description: "Evergreen in Las Collinas",
-	}))
+	var period models.Period
+
+	id, ok := c.GetQuery("id")
+
+	if ok == false {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Missing id query parameter"})
+		return
+	}
+
+	if err := c.BindJSON(&period); err != nil {
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, sc.ScheduleService.UpdateSchedule(id, period))
 }
