@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"github.com/aavsss/programado/api/v1/schedule/models"
+	"github.com/aavsss/programado/api/v1/schedule/repository"
 	"github.com/gin-gonic/gin"
 
 	"net/http"
@@ -26,22 +27,31 @@ func (sc *ScheduleController) RegisterScheduleRoutes(rg *gin.RouterGroup) {
 }
 
 func (sc *ScheduleController) viewSchedule(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, sc.ScheduleService.ViewSchedule())
+	returnChannel := make(chan []repository.PeriodInDB)
+
+	go sc.ScheduleService.ViewSchedule(returnChannel)
+	sortedSchedule := <-returnChannel
+	c.IndentedJSON(http.StatusOK, sortedSchedule)
 }
 
 func (sc *ScheduleController) addToSchedule(c *gin.Context) {
+	returnChannel := make(chan bool)
 	var period models.Period
 
 	if err := c.BindJSON(&period); err != nil {
 		return
 	}
 
+	go sc.ScheduleService.AddToSchedule(period, returnChannel)
+	isSuccess := <-returnChannel
+
 	c.IndentedJSON(
-		http.StatusOK, sc.ScheduleService.AddToSchedule(period),
+		http.StatusOK, isSuccess,
 	)
 }
 
 func (sc *ScheduleController) removeFromSchedule(c *gin.Context) {
+	returnChannel := make(chan bool)
 	id, ok := c.GetQuery("id")
 
 	if !ok {
@@ -49,10 +59,14 @@ func (sc *ScheduleController) removeFromSchedule(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, sc.ScheduleService.RemoveFromSchedule(id))
+	go sc.ScheduleService.RemoveFromSchedule(id, returnChannel)
+	isSuccess := <-returnChannel
+
+	c.IndentedJSON(http.StatusOK, isSuccess)
 }
 
 func (sc *ScheduleController) updateSchedule(c *gin.Context) {
+	returnChannel := make(chan bool)
 	var period models.Period
 
 	id, ok := c.GetQuery("id")
@@ -66,5 +80,8 @@ func (sc *ScheduleController) updateSchedule(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, sc.ScheduleService.UpdateSchedule(id, period))
+	go sc.ScheduleService.UpdateSchedule(id, period, returnChannel)
+	isSuccess := <-returnChannel
+
+	c.IndentedJSON(http.StatusOK, isSuccess)
 }

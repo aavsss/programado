@@ -9,10 +9,10 @@ import (
 )
 
 type ScheduleService interface {
-	AddToSchedule(period models.Period) bool
-	RemoveFromSchedule(id string) bool
-	ViewSchedule() []repository.PeriodInDB
-	UpdateSchedule(id string, newPeriod models.Period) bool
+	AddToSchedule(period models.Period, toReturn chan bool)
+	RemoveFromSchedule(id string, toReturn chan bool)
+	ViewSchedule(toReturn chan []repository.PeriodInDB)
+	UpdateSchedule(id string, newPeriod models.Period, toReturn chan bool)
 }
 
 type ScheduleServiceImpl struct {
@@ -23,7 +23,7 @@ func NewService() ScheduleService {
 	return &ScheduleServiceImpl{}
 }
 
-func (s *ScheduleServiceImpl) AddToSchedule(period models.Period) bool {
+func (s *ScheduleServiceImpl) AddToSchedule(period models.Period, toReturn chan bool) {
 	toBeAdded := repository.PeriodInDB{
 		Id:          uuid.New().String(),
 		StartTime:   period.StartTime,
@@ -34,38 +34,38 @@ func (s *ScheduleServiceImpl) AddToSchedule(period models.Period) bool {
 	for _, period := range repository.MockData {
 		if (toBeAdded.StartTime >= period.StartTime || toBeAdded.EndTime >= period.StartTime) &&
 			(toBeAdded.StartTime <= period.EndTime || toBeAdded.EndTime <= period.EndTime) {
-			return false
+			toReturn <- false
 		}
 	}
 	repository.MockData = append(repository.MockData, toBeAdded)
-	return true
+	toReturn <- true
 }
 
-func (s *ScheduleServiceImpl) RemoveFromSchedule(id string) bool {
+func (s *ScheduleServiceImpl) RemoveFromSchedule(id string, toReturn chan bool) {
 	// Imperative side. Change it to declarative
 	for i, period := range repository.MockData {
 		if period.Id == id {
 			repository.MockData = append(repository.MockData[:i], repository.MockData[i+1:]...)
-			return true
+			toReturn <- true
 		}
 	}
-	return false
+	toReturn <- false
 }
 
-func (s *ScheduleServiceImpl) ViewSchedule() []repository.PeriodInDB {
+func (s *ScheduleServiceImpl) ViewSchedule(toReturn chan []repository.PeriodInDB) {
 	sort.SliceStable(repository.MockData, func(i, j int) bool {
 		return repository.MockData[i].StartTime < repository.MockData[j].StartTime
 	})
-	return repository.MockData
+	toReturn <- repository.MockData
 }
 
-func (s *ScheduleServiceImpl) UpdateSchedule(id string, newPeriod models.Period) bool {
+func (s *ScheduleServiceImpl) UpdateSchedule(id string, newPeriod models.Period, toReturn chan bool) {
 	// to check if it overlaps or not
 	for _, period := range repository.MockData {
 		if period.Id != id {
 			if (newPeriod.StartTime >= period.StartTime || newPeriod.EndTime >= period.StartTime) &&
 				(newPeriod.StartTime <= period.EndTime || newPeriod.EndTime <= period.EndTime) {
-				return false
+				toReturn <- false
 			}
 		}
 	}
@@ -75,8 +75,8 @@ func (s *ScheduleServiceImpl) UpdateSchedule(id string, newPeriod models.Period)
 			(*period).StartTime = newPeriod.StartTime
 			(*period).EndTime = newPeriod.EndTime
 			(*period).Description = newPeriod.Description
-			return true
+			toReturn <- true
 		}
 	}
-	return false
+	toReturn <- false
 }
