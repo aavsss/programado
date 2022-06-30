@@ -20,16 +20,27 @@ func NewController(scheduleService ScheduleService) ScheduleController {
 
 func (sc *ScheduleController) RegisterScheduleRoutes(rg *gin.RouterGroup) {
 	scheduleRoute := rg.Group("/schedule")
-	scheduleRoute.GET("/", sc.viewSchedule)
+	scheduleRoute.GET("/", sc.viewScheduleOf)
 	scheduleRoute.POST("/add", sc.addToSchedule)
 	scheduleRoute.POST("/remove", sc.removeFromSchedule)
 	scheduleRoute.PUT("/update", sc.updateSchedule)
 }
 
-func (sc *ScheduleController) viewSchedule(c *gin.Context) {
+func (sc *ScheduleController) viewScheduleOf(c *gin.Context) {
+	id, ok := c.GetQuery("ownerId")
+	role, Ook := c.GetQuery("role")
+
+	if !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Owner id missing"})
+	}
+
+	if !Ook {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "role is missing"})
+	}
+
 	returnChannel := make(chan []repository.PeriodInDB)
 
-	go sc.ScheduleService.ViewSchedule(returnChannel)
+	go sc.ScheduleService.ViewScheduleOf(id, role, returnChannel)
 	sortedSchedule := <-returnChannel
 	c.IndentedJSON(http.StatusOK, sortedSchedule)
 }
