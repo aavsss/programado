@@ -3,6 +3,7 @@ package master
 import (
 	"github.com/aavsss/programado/api/v1/schedule"
 	"github.com/aavsss/programado/api/v1/schedule/repository"
+	"github.com/google/uuid"
 )
 
 type MasterService interface {
@@ -29,13 +30,30 @@ func (ms *MasterServiceImpl) viewRequests(masterId string) []repository.RequestI
 }
 
 func (ms *MasterServiceImpl) reviewRequests(masterId string, requestId string, accept bool) {
-	for _, request := range repository.ScheduleQueue {
-		if request.Id == requestId {
+	for i, request := range repository.ScheduleQueue {
+		if request.Id == requestId && request.Requestee == masterId {
 			if accept {
+				// todo: check to see if the schedule fits into period
+				// or if there are alternatives to it
+
+				// add the item to the schedule
+				toBeAdded := repository.PeriodInDB{
+					Id:          uuid.New().String(),
+					StartTime:   request.StartTime,
+					EndTime:     request.EndTime,
+					Description: request.Description,
+					UserId:      request.Requestee,
+				}
+				repository.MockData = append(repository.MockData, toBeAdded)
 				// remove the item from the slice
+				repository.ScheduleQueue = append(repository.ScheduleQueue[:i], repository.ScheduleQueue[i+1:]...)
 			} else {
-				// move it to temporary delete section
+				// copy the item to removedScheduleRequests
+				repository.RemovedScheduleRequests = append(repository.RemovedScheduleRequests, request)
+				// remove the item form the slice
+				repository.ScheduleQueue = append(repository.ScheduleQueue[:i], repository.ScheduleQueue[i+1:]...)
 			}
 		}
+		return
 	}
 }

@@ -7,3 +7,5 @@ var MockData = []PeriodInDB{
 }
 
 var ScheduleQueue = []RequestInDB{}
+
+var RemovedScheduleRequests = []RequestInDB{}

@@ -19,6 +19,7 @@ func NewController(masterService MasterService) MasterController {
 func (mc *MasterController) RegisterMasterRoutes(rg *gin.RouterGroup) {
 	masterRoute := rg.Group("/master")
 	masterRoute.GET("/requests", mc.viewRequests)
+	masterRoute.POST("/review_requests", mc.reviewRequests)
 }
 
 func (mc *MasterController) viewRequests(c *gin.Context) {
@@ -30,4 +31,17 @@ func (mc *MasterController) viewRequests(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, mc.MasterService.viewRequests(masterId))
+}
+
+func (mc *MasterController) reviewRequests(c *gin.Context) {
+	scheduleId, ok := c.GetQuery("schedule_id")
+
+	if !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"Message": "Master id is missing"})
+		return
+	}
+
+	mc.MasterService.reviewRequests("2", scheduleId, true)
+	c.IndentedJSON(http.StatusOK, gin.H{"Message": "Not implemented correctly"})
+
 }
