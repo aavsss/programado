@@ -33,10 +33,12 @@ func (s *ScheduleServiceImpl) AddToSchedule(period models.Period, toReturn chan 
 	}
 	// checking to see if the schedule overlaps or not
 	for _, period := range repository.MockData {
-		if (toBeAdded.StartTime >= period.StartTime || toBeAdded.EndTime >= period.StartTime) &&
-			(toBeAdded.StartTime <= period.EndTime || toBeAdded.EndTime <= period.EndTime) {
-			toReturn <- false
-			return
+		if toBeAdded.UserId == period.UserId {
+			if (toBeAdded.StartTime >= period.StartTime || toBeAdded.EndTime >= period.StartTime) &&
+				(toBeAdded.StartTime <= period.EndTime || toBeAdded.EndTime <= period.EndTime) {
+				toReturn <- false
+				return
+			}
 		}
 	}
 	repository.MockData = append(repository.MockData, toBeAdded)
@@ -44,7 +46,6 @@ func (s *ScheduleServiceImpl) AddToSchedule(period models.Period, toReturn chan 
 }
 
 func (s *ScheduleServiceImpl) RemoveFromSchedule(id string, toReturn chan bool) {
-	// Imperative side. Change it to declarative
 	for i, period := range repository.MockData {
 		if period.Id == id {
 			repository.MockData = append(repository.MockData[:i], repository.MockData[i+1:]...)
@@ -75,7 +76,7 @@ func (s *ScheduleServiceImpl) ViewScheduleOf(ownerId string, role string, toRetu
 func (s *ScheduleServiceImpl) UpdateSchedule(id string, newPeriod models.Period, toReturn chan bool) {
 	// to check if it overlaps or not
 	for _, period := range repository.MockData {
-		if period.Id != id {
+		if period.Id != id && newPeriod.UserId == period.UserId {
 			if (newPeriod.StartTime >= period.StartTime || newPeriod.EndTime >= period.StartTime) &&
 				(newPeriod.StartTime <= period.EndTime || newPeriod.EndTime <= period.EndTime) {
 				toReturn <- false

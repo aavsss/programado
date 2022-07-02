@@ -32,10 +32,12 @@ func (sc *ScheduleController) viewScheduleOf(c *gin.Context) {
 
 	if !ok {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Owner id missing"})
+		return
 	}
 
 	if !Ook {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "role is missing"})
+		return
 	}
 
 	returnChannel := make(chan []repository.PeriodInDB)
