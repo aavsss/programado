@@ -7,8 +7,8 @@ import (
 )
 
 type MasterService interface {
-	viewRequests(masterId string) []repository.RequestInDB
-	reviewRequests(masterId string, requestId string, accept bool)
+	viewRequests(masterId string, toReturn chan []repository.RequestInDB)
+	reviewRequest(masterId string, requestId string, accept bool)
 }
 
 type MasterServiceImpl struct {
@@ -19,22 +19,23 @@ func NewService() MasterService {
 	return &MasterServiceImpl{}
 }
 
-func (ms *MasterServiceImpl) viewRequests(masterId string) []repository.RequestInDB {
+func (ms *MasterServiceImpl) viewRequests(masterId string, toReturn chan []repository.RequestInDB) {
 	var userQueue []repository.RequestInDB
 	for _, request := range repository.ScheduleQueue {
 		if request.Requestee == masterId {
 			userQueue = append(userQueue, request)
 		}
 	}
-	return userQueue
+	toReturn <- userQueue
 }
 
-func (ms *MasterServiceImpl) reviewRequests(masterId string, requestId string, accept bool) {
+func (ms *MasterServiceImpl) reviewRequest(masterId string, requestId string, accept bool) {
 	for i, request := range repository.ScheduleQueue {
 		if request.Id == requestId && request.Requestee == masterId {
 			if accept {
 				// todo: check to see if the schedule fits into period
 				// or if there are alternatives to it
+				// maybe the user wants to add or maybe they wanna replace it. depends on frontend
 
 				// add the item to the schedule
 				toBeAdded := repository.PeriodInDB{

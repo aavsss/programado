@@ -3,6 +3,7 @@ package master
 import (
 	"net/http"
 
+	"github.com/aavsss/programado/api/v1/schedule/repository"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +31,11 @@ func (mc *MasterController) viewRequests(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, mc.MasterService.viewRequests(masterId))
+	returnChannel := make(chan []repository.RequestInDB)
+	go mc.MasterService.viewRequests(masterId, returnChannel)
+	requests := <-returnChannel
+
+	c.IndentedJSON(http.StatusOK, requests)
 }
 
 func (mc *MasterController) reviewRequests(c *gin.Context) {
@@ -41,7 +46,7 @@ func (mc *MasterController) reviewRequests(c *gin.Context) {
 		return
 	}
 
-	mc.MasterService.reviewRequests("2", scheduleId, true)
+	go mc.MasterService.reviewRequest("2", scheduleId, true)
 	c.IndentedJSON(http.StatusOK, gin.H{"Message": "Not implemented correctly"})
 
 }

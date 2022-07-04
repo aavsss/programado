@@ -22,5 +22,8 @@ func (cc *ClientController) RegisterUserRoutes(rg *gin.RouterGroup) {
 }
 
 func (cc *ClientController) requestNewMeeting(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, cc.ClientService.RequestNewMeeting())
+	returnChannel := make(chan bool)
+	go cc.ClientService.RequestNewMeeting(returnChannel)
+	isSuccess := <-returnChannel
+	c.IndentedJSON(http.StatusOK, isSuccess)
 }

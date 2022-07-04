@@ -8,7 +8,7 @@ import (
 )
 
 type ClientService interface {
-	RequestNewMeeting() bool
+	RequestNewMeeting(toReturn chan bool)
 }
 
 type ClientServiceImpl struct {
@@ -21,7 +21,7 @@ func NewService(scheduleService schedule.ScheduleService) ClientService {
 	}
 }
 
-func (cs *ClientServiceImpl) RequestNewMeeting() bool {
+func (cs *ClientServiceImpl) RequestNewMeeting(toReturn chan bool) {
 	tempData := repository.RequestInDB{
 		Id:          uuid.New().String(),
 		StartTime:   500,
@@ -31,5 +31,5 @@ func (cs *ClientServiceImpl) RequestNewMeeting() bool {
 		Requestee:   "2",
 	}
 	repository.ScheduleQueue = append(repository.ScheduleQueue, tempData)
-	return true
+	toReturn <- true
 }
