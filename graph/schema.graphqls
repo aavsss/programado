@@ -1,0 +1,41 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Period {
+  id: ID!
+  startTime: Int!
+  endTime: Int!
+  description: String!
+  user: User!
+}
+
+type Request {
+  id: ID!
+  startTime: Int!
+  endTime: Int!
+  description: String!
+  requester: User!
+  requestee: User!
+}
+
+type User {
+  id: ID!
+  name: String!
+  role: String!
+}
+
+type Query {
+  periods: [Period!]!
+  requests: [Request!]!
+}
+
+input NewRequest {
+  startTime: Int!
+  endTime: Int!
+  description: String!
+}
+
+type Mutation {
+  createNewRequest(input: NewRequest!): Request!
+}
